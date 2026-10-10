@@ -1,15 +1,12 @@
 apiVersion: deploy.cloud.google.com/v1
-kind: DeliveryPipeline
+kind: Target
 
 metadata:
-  name: gke-cicd-pipeline
-  labels:
-    app: gke-cicd
+  name: dev
+  annotations: {}
+  labels: {}
 
-description: cicd delivery pipeline
+description: dev
 
-serialPipeline:
-  stages:
-    - targetId: dev
-
-    - targetId: prod
+gke:
+  cluster: projects/project-8384ed62-c311-4520-abc/locations/us-central1-a/clusters/cluster-1s

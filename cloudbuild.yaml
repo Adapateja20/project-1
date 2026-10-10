@@ -56,10 +56,10 @@ steps:
       set -e
 
       echo "Updating App1 image..."
-      sed -i "s|quickstart-image|quickstart-image:$SHORT_SHA|g" kubernetes/app1.yaml
+      sed -i "s|image: .*quickstart-image.*|image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/quickstart-image:$SHORT_SHA|" kubernetes/app1.yaml
 
       echo "Updating App2 image..."
-      sed -i "s|flask-image|flask-image:$SHORT_SHA|g" kubernetes/app2.yaml
+      sed -i "s|image: .*flask-image.*|image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/flask-image:$SHORT_SHA|" kubernetes/app2.yaml
 
       echo "App1 manifest:"
       cat kubernetes/app1.yaml
