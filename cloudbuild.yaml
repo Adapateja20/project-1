@@ -31,7 +31,7 @@ steps:
     - 'build'
     - '-t'
     - 'us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/flask-image:$SHORT_SHA'
-    - './app2'
+    - './app2.py'
 
 
 # ==========================================
