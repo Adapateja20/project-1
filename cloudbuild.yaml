@@ -23,7 +23,8 @@
         echo "App2 manifest:"
         cat kubernetes/app2.yml
  
-    steps:
+
+steps:
   # Step 1: Build App1 Image
   - name: 'gcr.io/cloud-builders/docker'
     id: 'Build App1 Image'
@@ -39,6 +40,7 @@
     args:
       - 'push'
       - 'us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/quickstart-image:$SHORT_SHA'
+
 
   # Step 3: Build App2 Image
   - name: 'gcr.io/cloud-builders/docker'
