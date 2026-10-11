@@ -1,24 +1,4 @@
 
-steps:
-  # Step 1: Build App1
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'Build App1 Image'
-    args:
-      - 'build'
-      - '-t'
-      - 'us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/quickstart-image:$SHORT_SHA'
-      - './app1'
-
-  # Step 2: Push App1
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'Push App1 Image'
-    args:
-      - 'push'
-      - 'us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/quickstart-image:$SHORT_SHA'
-
-  # Add your App2 build and push steps here.
-
-  # Prepare Kubernetes Manifests
   - name: 'gcr.io/google.com/cloudsdktool/google-cloud-cli:slim'
     id: 'Prepare Kubernetes Manifests'
     entrypoint: 'bash'
@@ -28,22 +8,132 @@ steps:
         set -e
 
         echo "Checking Kubernetes manifest files..."
-        test -f kubernetes/app1.yaml
-        test -f kubernetes/app2.yaml
+        test -f kubernetes/app1.yml
+        test -f kubernetes/app2.yml
 
         echo "Updating App1 image..."
-        sed -i "s|image: .*quickstart-image.*|image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/quickstart-image:$SHORT_SHA|" kubernetes/app1.yaml
+        sed -i "s|image: .*quickstart-image.*|image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/quickstart-image:$SHORT_SHA|" kubernetes/app1.yml
 
         echo "Updating App2 image..."
-        sed -i "s|image: .*flask-image.*|image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/flask-image:$SHORT_SHA|" kubernetes/app2.yaml
+        sed -i "s|image: .*flask-image.*|image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/flask-image:$SHORT_SHA|" kubernetes/app2.yml
 
         echo "App1 manifest:"
-        cat kubernetes/app1.yaml
+        cat kubernetes/app1.yml
 
         echo "App2 manifest:"
-        cat kubernetes/app2.yaml
+        cat kubernetes/app2.yml
+ 
+    steps:
+  # Step 1: Build App1 Image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Build App1 Image'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/quickstart-image:$SHORT_SHA'
+      - './app1'
 
-  # Keep your Cloud Deploy configuration and release steps here.
+  # Step 2: Push App1 Image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Push App1 Image'
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/quickstart-image:$SHORT_SHA'
 
-options:
-  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
+  # Step 3: Build App2 Image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Build App2 Image'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/flask-image:$SHORT_SHA'
+      - './app2'
+
+  # Step 4: Push App2 Image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Push App2 Image'
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/flask-image:$SHORT_SHA'
+
+  # Step 5: Prepare Kubernetes Manifests
+  - name: 'gcr.io/google.com/cloudsdktool/google-cloud-cli:slim'
+    id: 'Prepare Kubernetes Manifests'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -e
+
+        echo "Checking Kubernetes manifest files..."
+        test -f kubernetes/app1.yml
+        test -f kubernetes/app2.yml
+
+        echo "Updating App1 image..."
+        sed -i "s|image: .*quickstart-image.*|image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/quickstart-image:$SHORT_SHA|" kubernetes/app1.yml
+
+        echo "Updating App2 image..."
+        sed -i "s|image: .*flask-image.*|image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/flask-image:$SHORT_SHA|" kubernetes/app2.yml
+
+        echo "App1 manifest:"
+        cat kubernetes/app1.yml
+
+        echo "App2 manifest:"
+        cat kubernetes/app2.yml
+
+  # Step 6: Apply Cloud Deploy Configuration
+  - name: 'gcr.io/google.com/cloudsdktool/google-cloud-cli:slim'
+    id: 'Apply Cloud Deploy Configuration'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -e
+
+        echo "Applying Cloud Deploy pipeline..."
+        gcloud deploy apply \
+          --file=deploy/pipeline.yml \
+          --region=us-central1
+
+        echo "Applying development target..."
+        gcloud deploy apply \
+          --file=deploy/dev.yml \
+          --region=us-central1
+
+        echo "Applying production target..."
+        gcloud deploy apply \
+          --file=deploy/prod.yml \
+          --region=us-central1
+
+  # Step 7: Create App1 Release
+  - name: 'gcr.io/google.com/cloudsdktool/google-cloud-cli:slim'
+    id: 'Create App1 Release'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -e
+
+        echo "Creating App1 release..."
+        gcloud deploy releases create "app1-release-${SHORT_SHA}" \
+          --delivery-pipeline=gke-cicd-pipeline \
+          --region=us-central1 \
+          --from-k8s-manifest=./kubernetes/app1.yml
+
+  # Step 8: Create App2 Release
+  - name: 'gcr.io/google.com/cloudsdktool/google-cloud-cli:slim'
+    id: 'Create App2 Release'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -e
+
+        echo "Creating App2 release..."
+        gcloud deploy releases create "app2-release-${SHORT_SHA}" \
+          --delivery-pipeline=gke-cicd-pipeline \
+          --region=us-central1 \
+          --from-k8s-manifest=./kubernetes/app2.yml
+
+    options:
+    defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET

@@ -1,3 +1,4 @@
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,6 +15,6 @@ spec:
     spec:
       containers:
         - name: flask-container
-          image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/flask-image
+          image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/flask-image:latest
           ports:
             - containerPort: 8081
