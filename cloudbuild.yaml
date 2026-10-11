@@ -1,29 +1,3 @@
-
-  - name: 'gcr.io/google.com/cloudsdktool/google-cloud-cli:slim'
-    id: 'Prepare Kubernetes Manifests'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        set -e
-
-        echo "Checking Kubernetes manifest files..."
-        test -f kubernetes/app1.yml
-        test -f kubernetes/app2.yml
-
-        echo "Updating App1 image..."
-        sed -i "s|image: .*quickstart-image.*|image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/quickstart-image:$SHORT_SHA|" kubernetes/app1.yml
-
-        echo "Updating App2 image..."
-        sed -i "s|image: .*flask-image.*|image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/flask-image:$SHORT_SHA|" kubernetes/app2.yml
-
-        echo "App1 manifest:"
-        cat kubernetes/app1.yml
-
-        echo "App2 manifest:"
-        cat kubernetes/app2.yml
- 
-
 steps:
   # Step 1: Build App1 Image
   - name: 'gcr.io/cloud-builders/docker'
@@ -40,7 +14,6 @@ steps:
     args:
       - 'push'
       - 'us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/quickstart-image:$SHORT_SHA'
-
 
   # Step 3: Build App2 Image
   - name: 'gcr.io/cloud-builders/docker'
@@ -137,5 +110,5 @@ steps:
           --region=us-central1 \
           --from-k8s-manifest=./kubernetes/app2.yml
 
-    options:
-    defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
+options:
+  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
