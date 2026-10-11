@@ -1,24 +1,49 @@
 
-- name: 'gcr.io/google.com/cloudsdktool/google-cloud-cli:slim'
-  id: 'Prepare Kubernetes Manifests'
-  entrypoint: 'bash'
-  args:
-    - '-c'
-    - |
-      set -e
+steps:
+  # Step 1: Build App1
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Build App1 Image'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/quickstart-image:$SHORT_SHA'
+      - './app1'
 
-      echo "Checking Kubernetes manifest files..."
-      test -f kubernetes/app1.yaml
-      test -f kubernetes/app2.yaml
+  # Step 2: Push App1
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Push App1 Image'
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/quickstart-image:$SHORT_SHA'
 
-      echo "Updating App1 image..."
-      sed -i "s|image: .*quickstart-image.*|image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/quickstart-image:$SHORT_SHA|" kubernetes/app1.yaml
+  # Add your App2 build and push steps here.
 
-      echo "Updating App2 image..."
-      sed -i "s|image: .*flask-image.*|image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/flask-image:$SHORT_SHA|" kubernetes/app2.yaml
+  # Prepare Kubernetes Manifests
+  - name: 'gcr.io/google.com/cloudsdktool/google-cloud-cli:slim'
+    id: 'Prepare Kubernetes Manifests'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -e
 
-      echo "App1 manifest:"
-      cat kubernetes/app1.yaml
+        echo "Checking Kubernetes manifest files..."
+        test -f kubernetes/app1.yaml
+        test -f kubernetes/app2.yaml
 
-      echo "App2 manifest:"
-      cat kubernetes/app2.yaml
+        echo "Updating App1 image..."
+        sed -i "s|image: .*quickstart-image.*|image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/quickstart-image:$SHORT_SHA|" kubernetes/app1.yaml
+
+        echo "Updating App2 image..."
+        sed -i "s|image: .*flask-image.*|image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/flask-image:$SHORT_SHA|" kubernetes/app2.yaml
+
+        echo "App1 manifest:"
+        cat kubernetes/app1.yaml
+
+        echo "App2 manifest:"
+        cat kubernetes/app2.yaml
+
+  # Keep your Cloud Deploy configuration and release steps here.
+
+options:
+  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
