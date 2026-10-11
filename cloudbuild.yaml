@@ -1,52 +1,4 @@
-steps:
 
-# ==========================================
-# Build App1 Docker Image
-# ==========================================
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'Build App1 Image'
-  args:
-    - 'build'
-    - '-t'
-    - 'us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/quickstart-image:$SHORT_SHA'
-    - './app1'
-
-
-# ==========================================
-# Push App1 Docker Image
-# ==========================================
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'Push App1 Image'
-  args:
-    - 'push'
-    - 'us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/quickstart-image:$SHORT_SHA'
-
-
-# ==========================================
-# Build App2 Docker Image
-# ==========================================
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'Build App2 Image'
-  args:
-    - 'build'
-    - '-t'
-    - 'us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/flask-image:$SHORT_SHA'
-    - './app2.py'
-
-
-# ==========================================
-# Push App2 Docker Image
-# ==========================================
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'Push App2 Image'
-  args:
-    - 'push'
-    - 'us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/flask-image:$SHORT_SHA'
-
-
-# ==========================================
-# Prepare Kubernetes Manifests
-# ==========================================
 - name: 'gcr.io/google.com/cloudsdktool/google-cloud-cli:slim'
   id: 'Prepare Kubernetes Manifests'
   entrypoint: 'bash'
@@ -55,86 +7,18 @@ steps:
     - |
       set -e
 
+      echo "Checking Kubernetes manifest files..."
+      test -f kubernetes/app1.yaml
+      test -f kubernetes/app2.yaml
+
       echo "Updating App1 image..."
       sed -i "s|image: .*quickstart-image.*|image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/quickstart-image:$SHORT_SHA|" kubernetes/app1.yaml
 
       echo "Updating App2 image..."
-      ssed -i "s|image: .*flask-image.*|image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/flask-image:$SHORT_SHA|" kubernetes/app2.yaml
+      sed -i "s|image: .*flask-image.*|image: us-central1-docker.pkg.dev/project-8384ed62-c311-4520-abc/gke-repo/flask-image:$SHORT_SHA|" kubernetes/app2.yaml
 
       echo "App1 manifest:"
       cat kubernetes/app1.yaml
 
       echo "App2 manifest:"
       cat kubernetes/app2.yaml
-
-
-# ==========================================
-# Apply Cloud Deploy Pipeline
-# ==========================================
-- name: 'gcr.io/google.com/cloudsdktool/google-cloud-cli:slim'
-  id: 'Apply Cloud Deploy Configuration'
-  entrypoint: 'bash'
-  args:
-    - '-c'
-    - |
-      set -e
-
-      echo "Applying Cloud Deploy pipeline..."
-      gcloud deploy apply \
-        --file=deploy/pipeline.yaml \
-        --region=us-central1
-
-      echo "Applying development target..."
-      gcloud deploy apply \
-        --file=deploy/dev.yaml \
-        --region=us-central1
-
-      echo "Applying production target..."
-      gcloud deploy apply \
-        --file=deploy/prod.yaml \
-        --region=us-central1
-
-
-# ==========================================
-# Create App1 Release
-# ==========================================
-- name: 'gcr.io/google.com/cloudsdktool/google-cloud-cli:slim'
-  id: 'Create App1 Release'
-  entrypoint: 'bash'
-  args:
-    - '-c'
-    - |
-      set -e
-
-      echo "Creating App1 release..."
-
-      gcloud deploy releases create "app1-release-${SHORT_SHA}" \
-        --delivery-pipeline=gke-cicd-pipeline \
-        --region=us-central1 \
-        --from-k8s-manifest=./kubernetes/app1.yaml
-
-
-# ==========================================
-# Create App2 Release
-# ==========================================
-- name: 'gcr.io/google.com/cloudsdktool/google-cloud-cli:slim'
-  id: 'Create App2 Release'
-  entrypoint: 'bash'
-  args:
-    - '-c'
-    - |
-      set -e
-
-      echo "Creating App2 release..."
-
-      gcloud deploy releases create "app2-release-${SHORT_SHA}" \
-        --delivery-pipeline=gke-cicd-pipeline \
-        --region=us-central1 \
-        --from-k8s-manifest=./kubernetes/app2.yaml
-
-
-# ==========================================
-# Cloud Build Options
-# ==========================================
-options:
-  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
