@@ -1,14 +1,7 @@
 apiVersion: deploy.cloud.google.com/v1
 kind: Target
-
 metadata:
   name: prod
-  annotations: {}
-  labels: {}
-
-description: prod
-
-requireApproval: true
-
+description: Production environment
 gke:
-  cluster: projects/project-8384ed62-c311-4520-abc/locations/us-central1-a/clusters/cluster-2
+  cluster: projects/project-8384ed62-c311-4520-abc/locations/us-central1/clusters/cluster-1
